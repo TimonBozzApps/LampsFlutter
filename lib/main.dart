@@ -116,7 +116,7 @@ class HomeState extends State<Home> {
                   }
               ),
             if (kIsWeb)
-              Text("Web version 0.11")
+              Text("Web version 0.12 - Ai Ready - New engine")
           ],
         ),
       );
@@ -150,14 +150,13 @@ class HomeState extends State<Home> {
                 return;
               Navigator.push(context, MaterialPageRoute(
                 builder: (context) => LocalGameRoute(
-                    LocalGame2(GameState2(value['sizeX'], value['sizeY'], value['players']),
-                        Duration(milliseconds: 300))),
+                    LocalGame(GameState(value['sizeX'], value['sizeY'], value['players']))),
               ));
             });
           },
         ),
       ),
-      /*Container(
+      Container(
         width: 120,
         child: RaisedButton(
           elevation: 0,
@@ -165,11 +164,12 @@ class HomeState extends State<Home> {
           child: Text("Against Ai"),
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => LocalGameRoute(LocalAiGame()),
+              builder: (context) => LocalGameRoute(
+                  LocalAiGame(GameState(5, 5, {"1", "&&AI&&1"}.toList()), SimpleRuleAgent(), false)),
             ));
           },
         ),
-      ),*/
+      ),
     ],
   );
 
@@ -188,10 +188,10 @@ class HomeState extends State<Home> {
           color: Colors.green,
           child: Text("Find Game"),
           onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => MultiplayerGameFind(_onlineApi),
-            );
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) => LocalGameRoute(
+                  LocalAiGame(GameState(8, 6, {"&&AI&&1", "&&AI&&2", "4"}.toList()), SimpleRuleAgent(), true)),
+            ));
           },
         ),
       ),

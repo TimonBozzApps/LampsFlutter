@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lamps3/online.dart';
 import 'package:rxdart/rxdart.dart';
+import 'aigame.dart';
 
 class Tile {
   String owner;
@@ -18,23 +22,19 @@ class Move {
   Move(this.posX, this.posY, this.player);
 }
 
-class Game {
-  bool _readyForNextMove = true;
-  Duration _animationDuration = Duration(milliseconds: 300);
-  int sizeX;
-  int sizeY;
-  BehaviorSubject<List<List<Tile>>> _board = BehaviorSubject();
-  BehaviorSubject<List<Tile>> _exploadingTiles = BehaviorSubject();
-  List<String> players;
-  List<List<Tile>> playerOwnedTiles;
+class GameState {
+  final int sizeX;
+  final int sizeY;
+  final List<String> players;
+
+  List<List<Tile>> board;
+  List<Tile> exploadingTiles;
+
   String currentPlayer;
-  int movesMade = 0;
+  int movesMade;
 
-  Stream<List<List<Tile>>> get board => _board.stream;
-  Stream<List<Tile>> get exploadingTiles => _exploadingTiles.stream;
-
-  Game(this.sizeX, this.sizeY, this.players, this._animationDuration){
-    List<List<Tile>> board = List.generate(sizeX, (x) => List.generate(sizeY, (y) {
+  GameState(this.sizeX, this.sizeY, this.players){
+    board = List.generate(sizeX, (x) => List.generate(sizeY, (y) {
       int maxCharge = 3;
       if (x == 0 || x == sizeX-1)
         maxCharge--;
@@ -42,32 +42,91 @@ class Game {
         maxCharge--;
       return Tile("", 0, maxCharge, x, y);
     }));
-    _board.add(board);
+    exploadingTiles = List<Tile>();
     currentPlayer = players[0];
-    playerOwnedTiles = List<List<Tile>>.generate(players.length, (index) => List<Tile>());
+    movesMade = 0;
+  }
+  GameState.fromPreviousVersionAndBoard(GameState gameState2, this.board):
+        sizeX = gameState2.sizeX,
+        sizeY = gameState2.sizeY,
+        players = gameState2.players,
+        exploadingTiles = gameState2.exploadingTiles,
+        currentPlayer = gameState2.currentPlayer,
+        movesMade = gameState2.movesMade;
+  GameState.fromPreviousVersionAndExploadingTiles(GameState gameState2, this.exploadingTiles):
+        sizeX = gameState2.sizeX,
+        sizeY = gameState2.sizeY,
+        players = gameState2.players,
+        board = gameState2.board,
+        currentPlayer = gameState2.currentPlayer,
+        movesMade = gameState2.movesMade;
+
+  List<List<Tile>> get playerOwnedTiles {
+    var playerOwnedTiles = List<List<Tile>>.generate(players.length, (index) => List<Tile>());
+    for (List<Tile> tiles in board)
+      for (Tile tile in tiles)
+        if (tile.owner != "") {
+          playerOwnedTiles[players.indexOf(tile.owner)].add(tile);
+        }
+    return playerOwnedTiles;
+  }
+  List<String> get playersStillInTheGame =>
+      playerOwnedTiles.where((element) => element.length > 0).map((e) => e[0].owner).toList();
+
+  bool get isTerminated => movesMade > players.length && playersStillInTheGame.length < 2;
+
+  int evaluate(int player){
+    int value = 0;
+    for (List<Tile> tiles in board) {
+      for (Tile tile in tiles) {
+        if (tile.charge == 0)
+          continue;
+        int tileValue = tile.charge + 1;
+        if (tile.posX == 0 || tile.posX == 4)
+          tileValue*2;
+        if (tile.posY == 0 || tile.posY == 4)
+          tileValue*2;
+        if (tile.owner == player.toString())
+          value += tileValue;
+        else
+          value -= tileValue;
+      }
+    }
+    return value;
+  }
+}
+class Game {
+  bool _readyForNextMove = true;
+  Duration _animationDuration = Duration(milliseconds: 300);
+  BehaviorSubject<GameState> _gameState = BehaviorSubject(); //var
+
+  ValueStream<GameState> get gameState => _gameState.stream;
+
+  Game(GameState gameState2, this._animationDuration){
+    _gameState.add(gameState2);
   }
 
   //returns whether move was made
-  bool makeMove(Move move, bool animate){
+  bool _makeMove(Move move, bool animate){
     if (!makeMoveCheck(move))
       return false;
-    _board.value[move.posX][move.posY].charge++;
-    _board.value[move.posX][move.posY].owner = move.player;
-    movesMade++;
+    _gameState.value.board[move.posX][move.posY].charge++;
+    _gameState.value.board[move.posX][move.posY].owner = move.player;
+    _gameState.value.movesMade++;
     Future.sync(() => _updateBoard(animate));
     return true;
   }
   bool makeMoveCheck(Move move){
     if (!_readyForNextMove)
       return false;
-    if (!players.contains(move.player)) {
+    if (!_gameState.value.players.contains(move.player)) {
       return false; //player is already out
     }
-    if (currentPlayer != move.player) {
+    if (_gameState.value.currentPlayer != move.player) {
       return false; //not player's turn
     }
-    if (_board.value[move.posX][move.posY].owner != "" && //ok if no one owns it
-        _board.value[move.posX][move.posY].owner != move.player) {
+    if (_gameState.value.board[move.posX][move.posY].owner != "" && //ok if no one owns it
+        _gameState.value.board[move.posX][move.posY].owner != move.player) {
       return false; //not player's tile
     }
     return true;
@@ -75,16 +134,16 @@ class Game {
 
   void _updateBoard(bool animate) async{
     _readyForNextMove = false;
-    List<List<Tile>> newBoard = List.generate(sizeX, (x) => List.generate(sizeY, (y) {
+    List<List<Tile>> newBoard = List.generate(_gameState.value.sizeX, (x) => List.generate(_gameState.value.sizeY, (y) {
       int maxCharge = 3;
-      if (x == 0 || x == sizeX-1)
+      if (x == 0 || x == _gameState.value.sizeX-1)
         maxCharge--;
-      if (y == 0 || y == sizeY-1)
+      if (y == 0 || y == _gameState.value.sizeY-1)
         maxCharge--;
       return Tile("", 0, maxCharge, x, y);
     }));
     List<Tile> exploadedTiles = List<Tile>();
-    _board.value.forEach((row) {
+    _gameState.value.board.forEach((row) {
       row.forEach((tile) {
         if (tile.charge > tile.maxCharge) {
           //explode
@@ -95,10 +154,10 @@ class Game {
           } if (tile.posY - 1 >= 0) {
             newBoard[tile.posX][tile.posY - 1].charge++;
             newBoard[tile.posX][tile.posY - 1].owner = tile.owner;
-          } if (tile.posX + 1 < sizeX) {
+          } if (tile.posX + 1 < _gameState.value.sizeX) {
             newBoard[tile.posX + 1][tile.posY].charge++;
             newBoard[tile.posX + 1][tile.posY].owner = tile.owner;
-          } if (tile.posY + 1 < sizeY) {
+          } if (tile.posY + 1 < _gameState.value.sizeY) {
             newBoard[tile.posX][tile.posY + 1].charge++;
             newBoard[tile.posX][tile.posY + 1].owner = tile.owner;
           }
@@ -110,81 +169,66 @@ class Game {
         }
       });
     });
-    //determine amount of tiles a player owns
-    playerOwnedTiles = List<List<Tile>>.generate(players.length, (index) => List<Tile>());
-    newBoard.forEach((row) {
-      row.forEach((tile) {
-        if (tile.owner != "")
-          playerOwnedTiles[players.indexOf(tile.owner)].add(tile);
-      });
-    });
 
     if (exploadedTiles.isNotEmpty) {
       if (animate){
-        _exploadingTiles.add(exploadedTiles);
+        _gameState.add(GameState.fromPreviousVersionAndExploadingTiles(_gameState.value, exploadedTiles));
         await Future.delayed(_animationDuration, () {
-          return _board.add(newBoard);
+          return _gameState.add(GameState.fromPreviousVersionAndBoard(_gameState.value, newBoard));
         });
+      }else {
+        _gameState.value.exploadingTiles = exploadedTiles;
+        _gameState.add(GameState.fromPreviousVersionAndBoard(_gameState.value, newBoard));
       }
-      _board.add(newBoard);
       _updateBoard(animate);  //recurse
     }else {
-      _board.add(newBoard);
       //find next player
-      bool isCurrentPlayerOwningTile = movesMade < players.length; //because in the first round nobody owns a tile
+      bool isCurrentPlayerOwningTile = _gameState.value.movesMade < _gameState.value.players.length; //because in the first round nobody owns a tile
       do {
-        int nextPlayerIndex = players.indexOf(currentPlayer) + 1;
-        if (nextPlayerIndex >= players.length)
+        int nextPlayerIndex = _gameState.value.players.indexOf(_gameState.value.currentPlayer) + 1;
+        if (nextPlayerIndex >= _gameState.value.players.length)
           nextPlayerIndex = 0;
-        currentPlayer = players[nextPlayerIndex];
+        _gameState.value.currentPlayer = _gameState.value.players[nextPlayerIndex];
         //find if current player still has tiles
-        if (playerOwnedTiles[nextPlayerIndex].length > 0)
+        if (_gameState.value.playerOwnedTiles[nextPlayerIndex].length > 0)
           isCurrentPlayerOwningTile = true; //can't set it to false because of initial condition (^see above^)
       } while  (!isCurrentPlayerOwningTile);
+      _gameState.value.exploadingTiles = exploadedTiles;
+      _gameState.add(GameState.fromPreviousVersionAndBoard(_gameState.value, newBoard));
       _readyForNextMove = true;
     }
   }
 
+  void printGame(){
+    print("------------------------");
+    var board = _gameState.value.board;
+    for (List<Tile> row in board){
+      String rowString = "";
+      for (Tile tile in row)
+        rowString += tile.charge.toString();
+      print(rowString);
+    }
+  }
+
   void dispose(){
-    _board.close();
-    _exploadingTiles.close();
+    _gameState.close();
   }
 }
-
-class LocalGame {
-  Game _game;
-  LocalGame(int sizeX, int sizeY, List<String> players) {
-    _game = Game(sizeX, sizeY, players, Duration(milliseconds: 400));
-  }
-
-  ValueStream<List<List<Tile>>> get board => _game.board;
-  ValueStream<List<Tile>> get exploadingTiles => _game.exploadingTiles;
-
-  int get sizeX => _game.sizeX;
-  int get sizeY => _game.sizeY;
-  int get movesMade => _game.movesMade;
-  List<String> get players => _game.players;
-  String get currentPlayer => _game.currentPlayer;
-  List<List<Tile>> get playerOwnedTiles => _game.playerOwnedTiles;
-  List<String> get playersStillInTheGame =>
-      playerOwnedTiles.where((element) => element.length > 0).map((e) => e[0].owner).toList();
+class LocalGame extends Game{
+  LocalGame(GameState gameState) : super(gameState, Duration(milliseconds: 400));
 
   bool makeMove(int posX, int posY){
-    return _game.makeMove(Move(posX, posY, currentPlayer), true);
-  }
-
-  void dispose(){
-    _game.dispose();
+    return _makeMove(Move(posX, posY, gameState.value.currentPlayer), true);
   }
 }
 
-class MultiplayerGame implements LocalGame{
+class MultiplayerGame extends Game implements LocalGame{
   Game _game;
   OnlineApi _onlineApi;
 
-  MultiplayerGame(this._onlineApi, OnlineGame onlineGame){
-    _game = Game(onlineGame.sizeX, onlineGame.sizeY, onlineGame.players, Duration(milliseconds: 400));
-    _game.board.listen(boardUpdate);
+  MultiplayerGame(this._onlineApi, OnlineGame onlineGame)
+      : super(GameState(onlineGame.sizeX, onlineGame.sizeY, onlineGame.players),
+      Duration(milliseconds: 400)){
     _onlineApi.newMoves.listen((newMoves) {
       //new move
       newMoves.forEach((element) {
@@ -193,18 +237,7 @@ class MultiplayerGame implements LocalGame{
     });
   }
 
-  ValueStream<List<List<Tile>>> get board => _game.board;
-  ValueStream<List<Tile>> get exploadingTiles => _game.exploadingTiles;
-
   ValueStream<OnlineGame> get onlineGame => _onlineApi.onlineGame;
-  int get sizeX => _game.sizeX;
-  int get sizeY => _game.sizeY;
-  int get movesMade => _game.movesMade;
-  List<String> get players => _game.players;
-  String get currentPlayer => _game.currentPlayer;
-  List<List<Tile>> get playerOwnedTiles => _game.playerOwnedTiles;
-  List<String> get playersStillInTheGame =>
-      playerOwnedTiles.where((element) => element.length > 0).map((e) => e[0].owner).toList();
 
   bool makeMove(int posX, int posY){
     if (_game.makeMoveCheck(Move(posX, posY, _onlineApi.playerName))) {
@@ -224,12 +257,59 @@ class MultiplayerGame implements LocalGame{
     if (_game == null || !_game._readyForNextMove)
       moveQueue.add(move);
     else
-      _game.makeMove(move, true);
+      _makeMove(move, true);
   }
   void boardUpdate(List<List<Tile>> newBoard){
     if (_game._readyForNextMove && moveQueue.isNotEmpty){
-      _game.makeMove(moveQueue[0], true);
+      _makeMove(moveQueue[0], true);
       moveQueue.removeAt(0);
     }
+  }
+}
+
+class LocalAiGame extends Game implements LocalGame{
+  Agent agent;
+  bool simulateOnline;
+
+  LocalAiGame(GameState gameState, this.agent, this.simulateOnline)
+      : super(gameState, Duration(milliseconds: 200)){
+    if (gameState.currentPlayer.startsWith("&&AI&&"))
+      doUiTurn(gameState);
+  }
+
+  StreamSubscription aiSub;
+  bool makeMove(int posX, int posY){
+    final result = _makeMove(Move(posX, posY, gameState.value.currentPlayer), true);
+    if (!result)
+      return result;
+    if (aiSub != null)
+      aiSub.cancel();
+    aiSub = gameState.listen((event) async{ //to wait for animations to be done
+      if (event.exploadingTiles.isEmpty){
+        aiSub.cancel();
+        if (!event.currentPlayer.startsWith("&&AI&&") || event.isTerminated) //not ai's turn
+          return;
+        //let ai think
+        doUiTurn(event);
+      }
+    });
+    return result;
+  }
+
+  List<int> onlineDelays = {
+    100,
+    2000,
+    300,
+    500,
+    800,
+    250,
+    400
+  }.toList();
+  void doUiTurn(GameState state) async{
+    if (simulateOnline)
+      await Future.delayed(Duration(milliseconds: onlineDelays[Random().nextInt(onlineDelays.length)]));
+    final action = await agent.chooseAction(state);
+    if (makeMove(action.posX, action.posY))
+      print("Ai not allowed");
   }
 }

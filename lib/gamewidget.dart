@@ -6,7 +6,7 @@ import 'package:lamps3/game.dart';
 import 'aigame.dart';
 
 class GameWidget extends StatefulWidget{
-  LocalGame2 _game;
+  LocalGame _game;
   GameWidget(this._game);
 
   @override
@@ -16,7 +16,7 @@ class GameWidget extends StatefulWidget{
 
 }
 class GameWidgetState extends State<GameWidget> with SingleTickerProviderStateMixin {
-  GameState2 gameState2;
+  GameState gameState2;
   GameWidgetState(this.gameState2) : _boardPainter = BoardPainter(gameState2, 0);
 
   BoardPainter _boardPainter;
@@ -89,7 +89,7 @@ class GameWidgetState extends State<GameWidget> with SingleTickerProviderStateMi
 }
 
 class BoardPainter extends CustomPainter {
-  GameState2 _gameState;
+  GameState _gameState;
   double rotationAngle;
   BoardPainter(this._gameState, this.rotationAngle);
 

@@ -5,7 +5,7 @@ import 'gamewidget.dart';
 import 'aigame.dart';
 
 class LocalGameRoute extends StatefulWidget{
-  LocalGame2 localGame;
+  LocalGame localGame;
   LocalGameRoute(this.localGame);
 
   @override
@@ -16,7 +16,7 @@ class LocalGameRoute extends StatefulWidget{
 
 class LocalGameRouteState extends State<LocalGameRoute>{
   bool winDialogShown = false;
-  GameState2 gameState;
+  GameState gameState;
 
   LocalGameRouteState(this.gameState);
 

@@ -22,6 +22,7 @@ class OnlineGameRouteState extends State<OnlineGameRoute>{
   OnlineGame _onlineGame;
   MultiplayerGame _multiplayerGame;
   bool winDialogShown = false;
+  GameState gameState;
 
   OnlineGameRouteState(this._onlineGame);
 
@@ -34,11 +35,11 @@ class OnlineGameRouteState extends State<OnlineGameRoute>{
       }
       if (event.state == 1) {
         _multiplayerGame = MultiplayerGame(widget.onlineApi, _onlineGame);
-        _multiplayerGame.board.listen((event) {
-          if (_multiplayerGame.playersStillInTheGame.length == 1 &&
-              _multiplayerGame.movesMade > _multiplayerGame.players.length &&
+        _multiplayerGame.gameState.listen((gameState) {
+          if (gameState.playersStillInTheGame.length == 1 &&
+              gameState.movesMade > gameState.players.length &&
               !winDialogShown){
-            String winner = _multiplayerGame.playersStillInTheGame[0];
+            String winner = gameState.playersStillInTheGame[0];
             winDialogShown = true;
             showDialog(
                 barrierDismissible: false,
@@ -46,11 +47,15 @@ class OnlineGameRouteState extends State<OnlineGameRoute>{
                 builder: (context) => OnlineWinDialog(winner, widget.onlineApi, _onlineGame)
             ).then((value) => Navigator.pop(context, value));
           }
-          setState(() {});
+          setState(() {
+            this.gameState = gameState;
+          });
         });
       }
       setState(() {
         _onlineGame = event;
+        if (_multiplayerGame != null)
+          this.gameState = _multiplayerGame.gameState.value;
       });
     });
   }
@@ -88,8 +93,7 @@ class OnlineGameRouteState extends State<OnlineGameRoute>{
   );
   Widget _mainBoardContent() {
     if (_onlineGame.state == 1 && _multiplayerGame != null) {
-      //return GameWidget(_multiplayerGame);
-      //todo: only for dev
+      return GameWidget(_multiplayerGame);
     }
     return SelectableText(
       "${_onlineGame.gameId}",
@@ -123,13 +127,13 @@ class OnlineGameRouteState extends State<OnlineGameRoute>{
               itemCount: _onlineGame.players.length,
               itemBuilder: (context, index) {
                 var color = Colors.white;
-                if (_multiplayerGame != null && _multiplayerGame.players.indexOf(_multiplayerGame.currentPlayer) == index)
+                if (_multiplayerGame != null && gameState.players.indexOf(gameState.currentPlayer) == index)
                   color = Colors.grey.shade100;
                 var subtitle = "";
                 if (_multiplayerGame != null) {
-                  subtitle = "${_multiplayerGame.playerOwnedTiles[index].length} tiles";
-                  if (_multiplayerGame.movesMade > _multiplayerGame.players.length
-                      && _multiplayerGame.playerOwnedTiles[index].length == 0)
+                  subtitle = "${gameState.playerOwnedTiles[index].length} tiles";
+                  if (gameState.movesMade > gameState.players.length
+                      && gameState.playerOwnedTiles[index].length == 0)
                     subtitle = "Game over";
                 }
                 var fontWeight = FontWeight.normal;
