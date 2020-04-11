@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "964915524954",
+    "firebase_url": "https://lamps-flutter.firebaseio.com",
+    "project_id": "lamps-flutter",
+    "storage_bucket": "lamps-flutter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:964915524954:android:b9e81108048c65bf9b6f63",
+        "android_client_info": {
+          "package_name": "timon.de.lamps3"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "964915524954-an54koo6dminrbtb425h5kukse7e7mmd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "timon.de.lamps3",
+            "certificate_hash": "1115c5fececb4a6194815ef9c3c07337c02d4112"
+          }
+        },
+        {
+          "client_id": "964915524954-7j2vu5cc7k4unhf7hbk1gvkme2729tth.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDA7LoM9rg4a89LPBmS2_FWqtarLYKDRdo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "964915524954-7j2vu5cc7k4unhf7hbk1gvkme2729tth.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
