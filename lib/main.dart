@@ -116,7 +116,7 @@ class HomeState extends State<Home> {
                   }
               ),
             if (kIsWeb)
-              Text("Web version 0.12 - Ai Ready - New engine")
+              Text("Web version 0.12.2")
           ],
         ),
       );
@@ -190,7 +190,7 @@ class HomeState extends State<Home> {
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(
               builder: (context) => LocalGameRoute(
-                  LocalAiGame(GameState(8, 6, {"&&AI&&1", "&&AI&&2", "4"}.toList()), SimpleRuleAgent(), true)),
+                  LocalAiGame(GameState(8, 6, {"&&AI&&1", "&&AI&&2", "4", "&&AI&&3"}.toList()), SimpleRuleAgent(), true)),
             ));
           },
         ),

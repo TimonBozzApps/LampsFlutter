@@ -121,7 +121,6 @@ class SimpleRuleAgent implements Agent{
     for (Move move in actions){
       if (state.board[move.posX][move.posY].maxCharge == state.board[move.posX][move.posY].charge
           && maxChargedEnemyTilesAround(move, state)){
-          print("because i want to kill the threat");
           return move;
       }
     }
@@ -132,7 +131,6 @@ class SimpleRuleAgent implements Agent{
       if (state.board[move.posX][move.posY].maxCharge == 1
           && !maxChargedEnemyTilesAround(move, state)
           && state.board[move.posX][move.posY].charge == 0) {
-        print("because i love corners");
         return move;
       }
     }
@@ -142,7 +140,6 @@ class SimpleRuleAgent implements Agent{
     for (Move move in actions){
       if (state.board[move.posX][move.posY].maxCharge == state.board[move.posX][move.posY].charge
           && enemyTilesAround(move, state)){
-        print("because i want to kill the innocent");
           return move;
       }
     }
@@ -152,13 +149,11 @@ class SimpleRuleAgent implements Agent{
     for (Move move in actions){
       if (state.board[move.posX][move.posY].maxCharge == state.board[move.posX][move.posY].charge+1
           && !maxChargedEnemyTilesAround(move, state)){
-        print("charge!");
         return move;
       }
     }
     actions.shuffle();
 
-    print("whatever");
     return actions[0];
   }
 

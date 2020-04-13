@@ -223,7 +223,6 @@ class LocalGame extends Game{
 }
 
 class MultiplayerGame extends Game implements LocalGame{
-  Game _game;
   OnlineApi _onlineApi;
 
   MultiplayerGame(this._onlineApi, OnlineGame onlineGame)
@@ -240,7 +239,7 @@ class MultiplayerGame extends Game implements LocalGame{
   ValueStream<OnlineGame> get onlineGame => _onlineApi.onlineGame;
 
   bool makeMove(int posX, int posY){
-    if (_game.makeMoveCheck(Move(posX, posY, _onlineApi.playerName))) {
+    if (makeMoveCheck(Move(posX, posY, _onlineApi.playerName))) {
       _onlineApi.makeMove(Move(posX, posY, _onlineApi.playerName));
       return true;
     }
@@ -248,19 +247,19 @@ class MultiplayerGame extends Game implements LocalGame{
   }
 
   void dispose(){
-    _game.dispose();
+    super.dispose();
     _onlineApi.dispose();
   }
 
   List<Move> moveQueue = List<Move>();
   void queueMove(Move move){
-    if (_game == null || !_game._readyForNextMove)
+    if (_readyForNextMove)
       moveQueue.add(move);
     else
       _makeMove(move, true);
   }
   void boardUpdate(List<List<Tile>> newBoard){
-    if (_game._readyForNextMove && moveQueue.isNotEmpty){
+    if (_readyForNextMove && moveQueue.isNotEmpty){
       _makeMove(moveQueue[0], true);
       moveQueue.removeAt(0);
     }
@@ -278,14 +277,19 @@ class LocalAiGame extends Game implements LocalGame{
   }
 
   StreamSubscription aiSub;
-  bool makeMove(int posX, int posY){
+  bool makeMove(int posX, int posY){ //used for the human input
+    if (gameState.value.currentPlayer.startsWith("&&AI&&"))
+      return false;
+    return _makeMoveAndStartAi(posX, posY);
+  }
+  bool _makeMoveAndStartAi(int posX, int posY){
     final result = _makeMove(Move(posX, posY, gameState.value.currentPlayer), true);
     if (!result)
       return result;
     if (aiSub != null)
       aiSub.cancel();
     aiSub = gameState.listen((event) async{ //to wait for animations to be done
-      if (event.exploadingTiles.isEmpty){
+      if (_readyForNextMove){
         aiSub.cancel();
         if (!event.currentPlayer.startsWith("&&AI&&") || event.isTerminated) //not ai's turn
           return;
@@ -309,7 +313,7 @@ class LocalAiGame extends Game implements LocalGame{
     if (simulateOnline)
       await Future.delayed(Duration(milliseconds: onlineDelays[Random().nextInt(onlineDelays.length)]));
     final action = await agent.chooseAction(state);
-    if (makeMove(action.posX, action.posY))
+    if (_makeMoveAndStartAi(action.posX, action.posY))
       print("Ai not allowed");
   }
 }
