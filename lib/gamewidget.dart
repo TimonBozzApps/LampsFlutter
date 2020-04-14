@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lamps3/game.dart';
+import 'package:lamps3/theme.dart';
 import 'aigame.dart';
 
 class GameWidget extends StatefulWidget{
@@ -94,12 +95,12 @@ class BoardPainter extends CustomPainter {
   BoardPainter(this._gameState, this.rotationAngle);
 
   static final playerColors = {
-    Colors.amber,
-    Colors.blue,
-    Colors.green,
-    Colors.red,
-    Colors.black,
-    Colors.deepPurpleAccent,
+    lightSeaGreen,
+    acidGreen,
+    spanishOrange,
+    frenchViolet,
+    goGreen,
+    bluePantone,
     Colors.tealAccent,
     Colors.brown,
     Colors.pinkAccent,
@@ -113,16 +114,16 @@ class BoardPainter extends CustomPainter {
     tileSize = size.height / _gameState.sizeY;
 
     Paint gridPainter = Paint()
-      ..color = Colors.black
+      ..color = isabelline
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 3;
 
     //draw rows
-    for (int row = 0; row <= _gameState.sizeY; row++){
+    for (int row = 1; row < _gameState.sizeY; row++){
       canvas.drawLine(Offset(0, row*tileSize), Offset(size.width, row*tileSize), gridPainter);
     }
     //draw columns
-    for (int column = 0; column <= _gameState.sizeX; column++){
+    for (int column = 1; column < _gameState.sizeX; column++){
       canvas.drawLine(Offset(column*tileSize, 0), Offset(column*tileSize, size.height), gridPainter);
     }
 
@@ -170,10 +171,10 @@ class BoardPainter extends CustomPainter {
     });
 
     //draw outside lines in current players color
-    canvas.drawLine(Offset(0, 0), Offset(size.width, 0), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
-    canvas.drawLine(Offset(0, 0), Offset(0, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
-    canvas.drawLine(Offset(0, size.height), Offset(size.width, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
-    canvas.drawLine(Offset(size.width, 0), Offset(size.width, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
+    //canvas.drawLine(Offset(0, 0), Offset(size.width, 0), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
+    //canvas.drawLine(Offset(0, 0), Offset(0, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
+    //canvas.drawLine(Offset(0, size.height), Offset(size.width, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
+    //canvas.drawLine(Offset(size.width, 0), Offset(size.width, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
   }
   double get alignCircleRadius => tileSize / 4;
   double get circleRadius => tileSize / 5;

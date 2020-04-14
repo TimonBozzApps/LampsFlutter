@@ -273,7 +273,7 @@ class LocalAiGame extends Game implements LocalGame{
   LocalAiGame(GameState gameState, this.agent, this.simulateOnline)
       : super(gameState, Duration(milliseconds: 200)){
     if (gameState.currentPlayer.startsWith("&&AI&&"))
-      doUiTurn(gameState);
+      doAiTurn(gameState);
   }
 
   StreamSubscription aiSub;
@@ -294,7 +294,7 @@ class LocalAiGame extends Game implements LocalGame{
         if (!event.currentPlayer.startsWith("&&AI&&") || event.isTerminated) //not ai's turn
           return;
         //let ai think
-        doUiTurn(event);
+        doAiTurn(event);
       }
     });
     return result;
@@ -309,11 +309,10 @@ class LocalAiGame extends Game implements LocalGame{
     250,
     400
   }.toList();
-  void doUiTurn(GameState state) async{
+  void doAiTurn(GameState state) async{
     if (simulateOnline)
       await Future.delayed(Duration(milliseconds: onlineDelays[Random().nextInt(onlineDelays.length)]));
     final action = await agent.chooseAction(state);
-    if (_makeMoveAndStartAi(action.posX, action.posY))
-      print("Ai not allowed");
+    _makeMoveAndStartAi(action.posX, action.posY);
   }
 }

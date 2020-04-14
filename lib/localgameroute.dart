@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lamps3/game.dart';
+import 'package:lamps3/theme.dart';
+import 'package:vibration/vibration.dart';
 
 import 'gamewidget.dart';
 import 'aigame.dart';
@@ -35,6 +38,10 @@ class LocalGameRouteState extends State<LocalGameRoute>{
             builder: (context) => LocalWinDialog(game.players.indexOf(winner))
         ).then((value) => Navigator.pop(context, value));
       }
+      if (game.exploadingTiles.length > 0)
+        Vibration.vibrate(duration: 50);
+      if (!game.currentPlayer.startsWith("&&AI&&") && game.exploadingTiles.length == 0)
+        Vibration.vibrate(duration: 150);
       setState(() {
         this.gameState = game;
       });
@@ -44,17 +51,20 @@ class LocalGameRouteState extends State<LocalGameRoute>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: <Widget>[
-          Flexible(
-            flex: 80,
-            child: _mainBoard,
-          ),
-          Flexible(
-            flex: 20,
-            child: _playersList,
-          )
-        ],
+      body: OrientationBuilder(
+        builder: (context, orientation) => RotatedBox(
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                    child: _mainBoard
+                ),
+                Center(
+                  child: _turnDisplay(orientation)
+                )
+              ],
+            ),
+          quarterTurns: orientation == Orientation.portrait ? 1 : 0,
+        ),
       ),
     );
   }
@@ -73,47 +83,55 @@ class LocalGameRouteState extends State<LocalGameRoute>{
     ),
   );
 
-  Widget get _playersList => Container(
-    decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black,
-              blurRadius: 8,
-              spreadRadius: -4
-          )
-        ]
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        ListView.builder(
-            shrinkWrap: true,
-            padding: EdgeInsets.only(top: 16),
-            itemCount: gameState.players.length,
-            itemBuilder: (context, index) {
-              var color = Colors.white;
-              if (gameState.players.indexOf(gameState.currentPlayer) == index)
-                color = Colors.grey.shade100;
-              var title = "${gameState.playerOwnedTiles[index].length} tiles";
-              if (gameState.movesMade > gameState.players.length
-                  && gameState.playerOwnedTiles[index].length == 0)
-                title = "Game over";
-              return Container(
-                color: color,
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: BoardPainter.playerColors[index],
-                    radius: 12,
-                  ),
-                  title: Text(title),
-                ),
-              );
-            }
-        ),
-      ],
-    ),
-  );
+  Widget _turnDisplay(Orientation orientation) {
+    int playerCount = gameState.playersStillInTheGame.length;
+    if (gameState.movesMade < gameState.players.length)
+      playerCount = gameState.players.length;
+    return Container(
+      //width: 48,
+      margin: EdgeInsets.only(right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        verticalDirection: orientation == Orientation.portrait
+            ? VerticalDirection.up : VerticalDirection.up, //because ltr when rotated
+        children: List.generate(playerCount, (index) {
+          if (gameState.movesMade >= gameState.players.length)
+            index = gameState.players.indexOf(gameState.playersStillInTheGame[index]);
+          bool humanPlayer = !gameState.players[index].startsWith("&&AI&&");
+          bool currentPlayer = gameState.players[index] == gameState.currentPlayer;
+          return AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+              color: currentPlayer ? Theme.of(context).cardColor : Colors.transparent
+            ),
+            child: _playerCircle(index, currentPlayer, humanPlayer),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _playerCircle(int index, bool currentPlayer, bool humanPlayer){
+    return Container(
+        margin: EdgeInsets.all(8),
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+              CircleAvatar(
+                backgroundColor: humanPlayer ? isabelline : Colors.transparent,
+                radius: 16,
+              ),
+            CircleAvatar(
+              backgroundColor: BoardPainter.playerColors[index],
+              radius: 12,
+            ),
+          ],
+        )
+    );
+  }
+
 }
 class LocalWinDialog extends StatelessWidget{
   int winnerIndex;

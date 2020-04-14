@@ -17,6 +17,8 @@ dependencies:
   cloud_firestore: 0.13.4+2
   cloud_functions: 0.4.2+3
   package_info: 0.4.0+16
+  google_fonts: ^0.4.0
+  vibration: 1.2.4
 
 dev_dependencies:
   flutter_test:
