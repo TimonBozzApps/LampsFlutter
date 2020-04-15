@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -19,7 +21,7 @@ void main() {
   SystemChrome.setEnabledSystemUIOverlays([]);
 
   runApp(MaterialApp(
-    title: 'Lamps',
+    title: 'Charge',
     theme: lampsTheme,
     home: Home(),
     debugShowCheckedModeBanner: false,
@@ -98,8 +100,14 @@ class HomeState extends State<Home> {
                         Navigator.push(context, MaterialPageRoute(
                           builder: (context) => LocalGameRoute(
                               LocalAiGame(
-                                  GameState(6, 4, {"&&AI&&1", "&&AI&&2", "4", "&&AI&&3"}.toList()),
-                                  SimpleRuleAgent(), true)),
+                                  generateOnlineGame(6, 4, {"&&AI&&AR": SimpleRuleAgentAdvanced(),
+                                    "&&AI&&SR": SimpleRuleAgent(),
+                                    "&&AI&&RR": RandomAgent(),
+                                    "&&AI&&WR": WeightedRandomAgent(),}),
+                                  {"&&AI&&AR": SimpleRuleAgentAdvanced(),
+                                    "&&AI&&SR": SimpleRuleAgent(),
+                                  "&&AI&&RR": RandomAgent(),
+                                  "&&AI&&WR": WeightedRandomAgent(),}, true)),
                         ));
                       },
                     ),
@@ -118,7 +126,7 @@ class HomeState extends State<Home> {
                   }
               ),
             if (kIsWeb)
-              Text("Web version 0.13.1 - beautiful")
+              Text("Web version 0.13.3 - beautiful")
           ],
         ),
       );
@@ -127,5 +135,32 @@ class HomeState extends State<Home> {
         child: CircularProgressIndicator(),
       ),
     );
+  }
+
+  GameState generateOnlineGame(int sizeX, int sizeY, Map<String, Agent> aiAgents){
+    final random = Random();
+    final playerCount = random.nextInt(3)+3;
+    final humanIndex = random.nextInt(playerCount);
+    final players = List.generate(playerCount, (index) {
+      if (humanIndex == index)
+        return "$index";
+      return "${aiAgents.keys.toList()[random.nextInt(aiAgents.length)]}$index";
+    });
+    final humanColor = spanishOrange;
+    final aiColors = {
+      lightSeaGreen,
+      acidGreen,
+      frenchViolet,
+      goGreen,
+      bluePantone,
+    }.toList();
+    final playerColors = List.generate(playerCount, (index) {
+      if (index == humanIndex)
+        return humanColor;
+      if (index > humanIndex)
+        index--;
+      return aiColors[index];
+    });
+    return GameState(sizeX, sizeY, players, playerColors);
   }
 }

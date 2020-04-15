@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lamps3/online.dart';
+import 'package:lamps3/theme.dart';
 import 'package:rxdart/rxdart.dart';
 import 'aigame.dart';
 
@@ -26,6 +27,7 @@ class GameState {
   final int sizeX;
   final int sizeY;
   final List<String> players;
+  final List<Color> playerColors;
 
   List<List<Tile>> board;
   List<Tile> exploadingTiles;
@@ -33,7 +35,7 @@ class GameState {
   String currentPlayer;
   int movesMade;
 
-  GameState(this.sizeX, this.sizeY, this.players){
+  GameState(this.sizeX, this.sizeY, this.players, this.playerColors){
     board = List.generate(sizeX, (x) => List.generate(sizeY, (y) {
       int maxCharge = 3;
       if (x == 0 || x == sizeX-1)
@@ -52,14 +54,16 @@ class GameState {
         players = gameState2.players,
         exploadingTiles = gameState2.exploadingTiles,
         currentPlayer = gameState2.currentPlayer,
-        movesMade = gameState2.movesMade;
+        movesMade = gameState2.movesMade,
+        playerColors = gameState2.playerColors;
   GameState.fromPreviousVersionAndExploadingTiles(GameState gameState2, this.exploadingTiles):
         sizeX = gameState2.sizeX,
         sizeY = gameState2.sizeY,
         players = gameState2.players,
         board = gameState2.board,
         currentPlayer = gameState2.currentPlayer,
-        movesMade = gameState2.movesMade;
+        movesMade = gameState2.movesMade,
+        playerColors = gameState2.playerColors;
 
   List<List<Tile>> get playerOwnedTiles {
     var playerOwnedTiles = List<List<Tile>>.generate(players.length, (index) => List<Tile>());
@@ -174,7 +178,8 @@ class Game {
       if (animate){
         _gameState.add(GameState.fromPreviousVersionAndExploadingTiles(_gameState.value, exploadedTiles));
         await Future.delayed(_animationDuration, () {
-          return _gameState.add(GameState.fromPreviousVersionAndBoard(_gameState.value, newBoard));
+          if (!_gameState.isClosed)
+            return _gameState.add(GameState.fromPreviousVersionAndBoard(_gameState.value, newBoard));
         });
       }else {
         _gameState.value.exploadingTiles = exploadedTiles;
@@ -224,9 +229,17 @@ class LocalGame extends Game{
 
 class MultiplayerGame extends Game implements LocalGame{
   OnlineApi _onlineApi;
+  static final multiplayerColors = {
+    lightSeaGreen,
+    acidGreen,
+    frenchViolet,
+    goGreen,
+    bluePantone,
+  }.toList();
 
   MultiplayerGame(this._onlineApi, OnlineGame onlineGame)
-      : super(GameState(onlineGame.sizeX, onlineGame.sizeY, onlineGame.players),
+      : super(GameState(onlineGame.sizeX, onlineGame.sizeY, onlineGame.players,
+      multiplayerColors.sublist(0, onlineGame.players.length)),
       Duration(milliseconds: 400)){
     _onlineApi.newMoves.listen((newMoves) {
       //new move
@@ -267,10 +280,10 @@ class MultiplayerGame extends Game implements LocalGame{
 }
 
 class LocalAiGame extends Game implements LocalGame{
-  Agent agent;
+  Map<String, Agent> aiAgents;
   bool simulateOnline;
 
-  LocalAiGame(GameState gameState, this.agent, this.simulateOnline)
+  LocalAiGame(GameState gameState, this.aiAgents, this.simulateOnline)
       : super(gameState, Duration(milliseconds: 200)){
     if (gameState.currentPlayer.startsWith("&&AI&&"))
       doAiTurn(gameState);
@@ -307,12 +320,14 @@ class LocalAiGame extends Game implements LocalGame{
     500,
     800,
     250,
-    400
+    400,
+    4000,
   }.toList();
   void doAiTurn(GameState state) async{
     if (simulateOnline)
       await Future.delayed(Duration(milliseconds: onlineDelays[Random().nextInt(onlineDelays.length)]));
-    final action = await agent.chooseAction(state);
+    await Future.delayed(Duration(milliseconds: 500));
+    final action = await aiAgents[gameState.value.currentPlayer.substring(0, 8)].chooseAction(state);
     _makeMoveAndStartAi(action.posX, action.posY);
   }
 }

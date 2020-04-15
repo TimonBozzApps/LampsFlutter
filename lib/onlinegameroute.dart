@@ -143,7 +143,7 @@ class OnlineGameRouteState extends State<OnlineGameRoute>{
                   color: color,
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: BoardPainter.playerColors[index],
+                      backgroundColor: gameState.playerColors[index],
                       radius: 12,
                     ),
                     title: Text(_onlineGame.players[index], style: TextStyle(fontWeight: fontWeight),),

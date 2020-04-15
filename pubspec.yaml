@@ -1,7 +1,7 @@
 name: lamps3
 description: A new Flutter application.
 
-version: 1.0.8+8
+version: 1.13.3+9
 
 environment:
   sdk: ">=2.2.2 <3.0.0"
@@ -19,10 +19,19 @@ dependencies:
   package_info: 0.4.0+16
   google_fonts: ^0.4.0
   vibration: 1.2.4
+  flutter_launcher_icons: 0.7.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter_icons:
+  ios: true
+  android: true
+  image_path_ios: "assets/launcher/icon.png"
+  image_path_android: "assets/launcher/icon.png"
+  adaptive_icon_background: "assets/launcher/background.png"
+  adaptive_icon_foreground: "assets/launcher/foreground.png"
 
 flutter:
   uses-material-design: true

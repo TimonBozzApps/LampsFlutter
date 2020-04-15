@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lamps3/game.dart';
 import 'package:lamps3/theme.dart';
@@ -35,13 +36,13 @@ class LocalGameRouteState extends State<LocalGameRoute>{
         showDialog(
             barrierDismissible: false,
             context: context,
-            builder: (context) => LocalWinDialog(game.players.indexOf(winner))
+            builder: (context) => LocalWinDialog(game.players.indexOf(winner), game)
         ).then((value) => Navigator.pop(context, value));
       }
-      if (game.exploadingTiles.length > 0)
-        Vibration.vibrate(duration: 50);
-      if (!game.currentPlayer.startsWith("&&AI&&") && game.exploadingTiles.length == 0)
-        Vibration.vibrate(duration: 150);
+      if (!kIsWeb) {
+        if (game.exploadingTiles.length > 0)
+          Vibration.vibrate(duration: 50);
+      }
       setState(() {
         this.gameState = game;
       });
@@ -94,7 +95,7 @@ class LocalGameRouteState extends State<LocalGameRoute>{
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         verticalDirection: orientation == Orientation.portrait
-            ? VerticalDirection.up : VerticalDirection.up, //because ltr when rotated
+            ? VerticalDirection.up : VerticalDirection.down, //because ltr when rotated
         children: List.generate(playerCount, (index) {
           if (gameState.movesMade >= gameState.players.length)
             index = gameState.players.indexOf(gameState.playersStillInTheGame[index]);
@@ -124,7 +125,7 @@ class LocalGameRouteState extends State<LocalGameRoute>{
                 radius: 16,
               ),
             CircleAvatar(
-              backgroundColor: BoardPainter.playerColors[index],
+              backgroundColor: gameState.playerColors[index],
               radius: 12,
             ),
           ],
@@ -135,21 +136,27 @@ class LocalGameRouteState extends State<LocalGameRoute>{
 }
 class LocalWinDialog extends StatelessWidget{
   int winnerIndex;
-  LocalWinDialog(this.winnerIndex);
+  GameState gameState;
+  LocalWinDialog(this.winnerIndex, this.gameState);
 
   @override
   Widget build(BuildContext context) {
+    var title = "You are the winner!";
+    if (gameState.players[winnerIndex].startsWith("&&AI&&"))
+      title = "You lost!";
     return AlertDialog(
-      title: Text("Player ${winnerIndex+1} is the Champion"),
+      backgroundColor: Theme.of(context).canvasColor,
+      title: Text(title),
       content: CircleAvatar(
-        backgroundColor: BoardPainter.playerColors[winnerIndex],
+        backgroundColor: gameState.playerColors[winnerIndex],
         radius: 12,
       ),
       actions: <Widget>[
         RaisedButton(
+          color: spanishOrange,
           elevation: 0,
             onPressed: Navigator.of(context).pop,
-          child: Text("Back to home"),
+          child: Text("Back home"),
         )
       ],
     );

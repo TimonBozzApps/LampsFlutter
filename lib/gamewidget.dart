@@ -94,19 +94,6 @@ class BoardPainter extends CustomPainter {
   double rotationAngle;
   BoardPainter(this._gameState, this.rotationAngle);
 
-  static final playerColors = {
-    lightSeaGreen,
-    acidGreen,
-    spanishOrange,
-    frenchViolet,
-    goGreen,
-    bluePantone,
-    Colors.tealAccent,
-    Colors.brown,
-    Colors.pinkAccent,
-    Colors.yellowAccent
-  }.toList();
-
   var tileSize;
   var rects = List<List<Rect>>();
 
@@ -127,11 +114,11 @@ class BoardPainter extends CustomPainter {
       canvas.drawLine(Offset(column*tileSize, 0), Offset(column*tileSize, size.height), gridPainter);
     }
 
-    List<Paint> playerPainters = List.generate(_gameState.players.length, (index) {
+    List<Paint> playerPainters = List.generate(_gameState.playerColors.length, (index) {
       return Paint()
         ..style = PaintingStyle.fill
         ..strokeWidth = 5
-        ..color = playerColors[index];
+        ..color = _gameState.playerColors[index];
     });
 
     rects.clear();
@@ -147,7 +134,12 @@ class BoardPainter extends CustomPainter {
         rectRow.add(rect);
         if (tile.charge > 0) {
           if (tile.charge > tile.maxCharge) { //explosion
-            canvas.drawRect(rect, playerPainters[_gameState.players.indexOf(tile.owner)]);
+            final explosionRect = RRect.fromRectAndCorners(rect.deflate(tileSize*0.05),
+                topRight: Radius.circular(8),
+                topLeft: Radius.circular(8),
+                bottomLeft: Radius.circular(8),
+                bottomRight: Radius.circular(8));
+            canvas.drawRRect(explosionRect, playerPainters[_gameState.players.indexOf(tile.owner)]);
           }else { //circles
             var chargeDiff = tile.maxCharge-tile.charge;
             if (tile.charge >= 1)

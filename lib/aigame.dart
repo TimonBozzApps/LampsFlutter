@@ -112,8 +112,6 @@ class WeightedRandomAgent implements Agent{
 class SimpleRuleAgent implements Agent{
   @override
   Future<Move> chooseAction(GameState state) async {
-    await Future.delayed(Duration(milliseconds: 500));
-
     List<Move> actions = AiElements.actions(state);
     actions.shuffle();
 
@@ -196,5 +194,126 @@ class SimpleRuleAgent implements Agent{
     return false;
   }
 }
+class SimpleRuleAgentAdvanced implements Agent{
+  @override
+  Future<Move> chooseAction(GameState state) async {
+    List<Move> actions = AiElements.actions(state);
+    actions.shuffle();
 
+    //explode own tile if charged enemy tile around
+    for (Move move in actions){
+      if (state.board[move.posX][move.posY].maxCharge == state.board[move.posX][move.posY].charge
+          && maxChargedEnemyTilesAround(move, state)){
+        return move;
+      }
+    }
+    actions.shuffle();
+
+    //corner if no charged enemy tile around
+    for (Move move in actions){
+      if (state.board[move.posX][move.posY].maxCharge == 1
+          && !maxChargedEnemyTilesAround(move, state)
+          && state.board[move.posX][move.posY].charge == 0) {
+        return move;
+      }
+    }
+    actions.shuffle();
+
+    //explode own tile if enemy tile around
+    //and no charged enemy tile is around the attacked tile
+    for (Move move in actions){
+      if (state.board[move.posX][move.posY].maxCharge == state.board[move.posX][move.posY].charge
+          && enemyTilesAround(move, state)){
+        Move enemyTileMove = enemyTilesAroundMove(move, state);
+        if (!maxChargedEnemyTilesAround(enemyTileMove, state)) {
+          return move;
+        }
+      }
+    }
+    actions.shuffle();
+
+    //charge own tile if enemy tile around further away from explosion
+    for (Move move in actions){
+      if (enemyTilesAround(move, state)) {
+        Move enemyTileMove = enemyTilesAroundMove(move, state);
+        Tile enemyTile = state.board[enemyTileMove.posX][enemyTileMove.posY];
+        if (state.board[move.posX][move.posY].maxCharge -
+            state.board[move.posX][move.posY].charge >= enemyTile.maxCharge - enemyTile.charge){
+          return move;
+        }
+      }
+    }
+    actions.shuffle();
+
+    //charge own tile if no enemy tile around
+    for (Move move in actions){
+      if (state.board[move.posX][move.posY].charge > 0
+          && !enemyTilesAround(move, state)){
+        return move;
+      }
+    }
+    actions.shuffle();
+
+    return actions[0];
+  }
+
+  bool maxChargedEnemyTilesAround(Move move, GameState state){
+    if (move.posX < state.sizeX-1 &&
+        state.board[move.posX+1][move.posY].owner != state.currentPlayer &&
+        state.board[move.posX+1][move.posY].maxCharge == state.board[move.posX+1][move.posY].charge)
+      return true;
+    if (move.posX > 0 &&
+        state.board[move.posX-1][move.posY].owner != state.currentPlayer &&
+        state.board[move.posX-1][move.posY].maxCharge == state.board[move.posX-1][move.posY].charge)
+      return true;
+    if (move.posY < state.sizeY-1 &&
+        state.board[move.posX][move.posY+1].owner != state.currentPlayer &&
+        state.board[move.posX][move.posY+1].maxCharge == state.board[move.posX][move.posY+1].charge)
+      return true;
+    if (move.posY > 0 &&
+        state.board[move.posX][move.posY-1].owner != state.currentPlayer &&
+        state.board[move.posX][move.posY-1].maxCharge == state.board[move.posX][move.posY-1].charge)
+      return true;
+    return false;
+  }
+
+  bool enemyTilesAround(Move move, GameState state){
+    if (move.posX < state.sizeX-1 &&
+        state.board[move.posX+1][move.posY].owner != state.currentPlayer &&
+        state.board[move.posX+1][move.posY].owner != "")
+      return true;
+    if (move.posX > 0 &&
+        state.board[move.posX-1][move.posY].owner != state.currentPlayer&&
+        state.board[move.posX-1][move.posY].owner != "")
+      return true;
+    if (move.posY < state.sizeY-1 &&
+        state.board[move.posX][move.posY+1].owner != state.currentPlayer&&
+        state.board[move.posX][move.posY+1].owner != "")
+      return true;
+    if (move.posY > 0 &&
+        state.board[move.posX][move.posY-1].owner != state.currentPlayer&&
+        state.board[move.posX][move.posY-1].owner != "")
+      return true;
+    return false;
+  }
+  Move enemyTilesAroundMove(Move move, GameState state){
+    if (move.posX < state.sizeX-1 &&
+        state.board[move.posX+1][move.posY].owner != state.currentPlayer &&
+        state.board[move.posX+1][move.posY].owner != "")
+      return Move(move.posX+1, move.posY, move.player);
+    if (move.posX > 0 &&
+        state.board[move.posX-1][move.posY].owner != state.currentPlayer&&
+        state.board[move.posX-1][move.posY].owner != "")
+      return Move(move.posX-1, move.posY, move.player);
+    if (move.posY < state.sizeY-1 &&
+        state.board[move.posX][move.posY+1].owner != state.currentPlayer&&
+        state.board[move.posX][move.posY+1].owner != "")
+      return Move(move.posX, move.posY+1, move.player);
+    if (move.posY > 0 &&
+        state.board[move.posX][move.posY-1].owner != state.currentPlayer&&
+        state.board[move.posX][move.posY-1].owner != "")
+      return Move(move.posX, move.posY-1, move.player);
+    return null;
+  }
+}
 
