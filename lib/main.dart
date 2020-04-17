@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flare_flutter/flare_actor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -85,37 +86,59 @@ class HomeState extends State<Home> {
         body: Column(
           children: <Widget>[
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text("Charge!", style: Theme.of(context).textTheme.headline1,),
-                    SizedBox(height: 40,),
-                    RaisedButton(
-                      elevation: 1,
-                      color: Theme.of(context).accentColor,
-                      colorBrightness: Theme.of(context).accentColorBrightness,
-                      child: Text("Play now", style: Theme.of(context).textTheme.button,),
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => LocalGameRoute(
-                              LocalAiGame(
-                                  generateOnlineGame(6, 4, {"&&AI&&AR": SimpleRuleAgentAdvanced(),
-                                    "&&AI&&SR": SimpleRuleAgent(),
-                                    "&&AI&&RR": RandomAgent(),
-                                    "&&AI&&WR": WeightedRandomAgent(),}),
-                                  {"&&AI&&AR": SimpleRuleAgentAdvanced(),
-                                    "&&AI&&SR": SimpleRuleAgent(),
-                                  "&&AI&&RR": RandomAgent(),
-                                  "&&AI&&WR": WeightedRandomAgent(),}, true)),
-                        ));
-                      },
+              child: Align(
+                    alignment: Alignment(0, 0.45),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text("Charge!", style: Theme.of(context).textTheme.headline1,),
+                        SizedBox(height: 40,),
+                        RaisedButton(
+                          elevation: 1,
+                          color: Theme.of(context).accentColor,
+                          colorBrightness: Theme.of(context).accentColorBrightness,
+                          child: Text("Play now", style: Theme.of(context).textTheme.button,),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => LocalGameRoute(
+                                  LocalAiGame(
+                                      generateOnlineGame(6, 4, {"&&AI&&AR": SimpleRuleAgentAdvanced(),
+                                        "&&AI&&SR": SimpleRuleAgent(),
+                                        "&&AI&&RR": RandomAgent(),
+                                        "&&AI&&WR": WeightedRandomAgent(),}),
+                                      {"&&AI&&AR": SimpleRuleAgentAdvanced(),
+                                        "&&AI&&SR": SimpleRuleAgent(),
+                                      "&&AI&&RR": RandomAgent(),
+                                      "&&AI&&WR": WeightedRandomAgent(),}, true)),
+                            ));
+                          },
+                        ),
+                        SizedBox(height: 10,),
+                        FlatButton(
+                          child: Text("How to play", style: Theme.of(context).textTheme.button,),
+                          highlightColor: Colors.transparent,
+                          splashColor: Color(0x40CCCCCC),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => ExplanationDialog(),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+            ),
+            Container(
+              height: 200,
+              width: 200,
+              child: FlareActor(
+                "assets/explanation_dialog.flr",
+                alignment: Alignment.center,
+                fit: BoxFit.contain,
+                animation: 'explosion',
               ),
             ),
-            Container(),
             if (!kIsWeb)
               FutureBuilder<PackageInfo>(
                   future: PackageInfo.fromPlatform(),
@@ -126,7 +149,7 @@ class HomeState extends State<Home> {
                   }
               ),
             if (kIsWeb)
-              Text("Web version 0.13.3 - beautiful")
+              Text("Web version 0.13.5 - beautiful")
           ],
         ),
       );
@@ -163,4 +186,34 @@ class HomeState extends State<Home> {
     });
     return GameState(sizeX, sizeY, players, playerColors);
   }
+}
+
+class ExplanationDialog extends StatelessWidget{
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("How to play"),
+      backgroundColor: Theme.of(context).canvasColor,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            height: 200,
+            width: 200,
+            child: FlareActor(
+              "assets/explanation_dialog.flr",
+              alignment: Alignment.center,
+              fit: BoxFit.contain,
+              animation: 'explosion',
+            ),
+          ),
+          SizedBox(height: 4),
+          Text("Place charges in your or open tiles", textAlign: TextAlign.center,),
+          Text("Create explosions to conquer enemy tiles", textAlign: TextAlign.center,),
+          Text("Be the last one standing", textAlign: TextAlign.center,),
+        ],
+      ),
+    );
+  }
+
 }
