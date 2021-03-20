@@ -1,13 +1,11 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 import 'package:lamps3/game.dart';
-import 'package:rxdart/rxdart.dart';
 
 class AiElements{
 
   static List<Move> actions(GameState state){
-    List<Move> actions = List<Move>();
+    List<Move> actions = [];
     for (List<Tile> tiles in state.board){
       for (Tile tile in tiles) {
         if (tile.owner == "" || tile.owner == state.currentPlayer)

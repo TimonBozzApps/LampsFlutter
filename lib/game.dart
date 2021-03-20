@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:lamps3/online.dart';
 import 'package:lamps3/theme.dart';
 import 'package:rxdart/rxdart.dart';
