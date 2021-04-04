@@ -9,7 +9,7 @@ class LocalGameSetup extends StatefulWidget {
   }
 }
 
-class LocalGameSetupState extends State<LocalGameSetup>{
+class LocalGameSetupState extends State<LocalGameSetup> {
   double sizeX = 8;
   double sizeY = 6;
   double players = 2;
@@ -49,7 +49,9 @@ class LocalGameSetupState extends State<LocalGameSetup>{
               });
             },
           ),
-          SizedBox(height: 8,),
+          SizedBox(
+            height: 8,
+          ),
           Slider(
             divisions: 8,
             min: 4,
@@ -66,15 +68,17 @@ class LocalGameSetupState extends State<LocalGameSetup>{
         ],
       ),
       actions: <Widget>[
-        RaisedButton(
+        ElevatedButton(
           child: Text("Play"),
-          color: Colors.amber,
-          elevation: 0,
+          style: ElevatedButton.styleFrom(
+            primary: Colors.amber,
+          ),
           onPressed: () {
             Navigator.pop(context, {
               "sizeX": sizeX.toInt(),
               "sizeY": sizeY.toInt(),
-              "players": List<String>.generate(players.toInt(), (index) => "$index")
+              "players":
+                  List<String>.generate(players.toInt(), (index) => "$index")
             });
           },
         )

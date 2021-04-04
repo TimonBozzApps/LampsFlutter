@@ -6,10 +6,10 @@ import 'package:lamps3/theme.dart';
 import 'package:vibration/vibration.dart';
 
 import 'gamewidget.dart';
-import 'aigame.dart';
+import 'theme.dart';
 
-class LocalGameRoute extends StatefulWidget{
-  LocalGame localGame;
+class LocalGameRoute extends StatefulWidget {
+  final LocalGame localGame;
   LocalGameRoute(this.localGame);
 
   @override
@@ -18,7 +18,7 @@ class LocalGameRoute extends StatefulWidget{
   }
 }
 
-class LocalGameRouteState extends State<LocalGameRoute>{
+class LocalGameRouteState extends State<LocalGameRoute> {
   bool winDialogShown = false;
   GameState gameState;
 
@@ -30,18 +30,18 @@ class LocalGameRouteState extends State<LocalGameRoute>{
     widget.localGame.gameState.listen((game) {
       if (game.playersStillInTheGame.length == 1 &&
           game.movesMade > game.players.length &&
-          !winDialogShown){
+          !winDialogShown) {
         String winner = game.playersStillInTheGame[0];
         winDialogShown = true;
         showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (context) => LocalWinDialog(game.players.indexOf(winner), game)
-        ).then((value) => Navigator.pop(context, value));
+                barrierDismissible: false,
+                context: context,
+                builder: (context) =>
+                    LocalWinDialog(game.players.indexOf(winner), game))
+            .then((value) => Navigator.pop(context, value));
       }
       if (!kIsWeb) {
-        if (game.exploadingTiles.length > 0)
-          Vibration.vibrate(duration: 50);
+        if (game.exploadingTiles.length > 0) Vibration.vibrate(duration: 50);
       }
       setState(() {
         this.gameState = game;
@@ -54,16 +54,12 @@ class LocalGameRouteState extends State<LocalGameRoute>{
     return Scaffold(
       body: OrientationBuilder(
         builder: (context, orientation) => RotatedBox(
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                    child: _mainBoard
-                ),
-                Center(
-                  child: _turnDisplay(orientation)
-                )
-              ],
-            ),
+          child: Row(
+            children: <Widget>[
+              Expanded(child: _mainBoard),
+              Center(child: _turnDisplay(orientation))
+            ],
+          ),
           quarterTurns: orientation == Orientation.portrait ? 1 : 0,
         ),
       ),
@@ -71,18 +67,18 @@ class LocalGameRouteState extends State<LocalGameRoute>{
   }
 
   Widget get _mainBoard => Container(
-    margin: EdgeInsets.all(12),
-    child: Center(
-      child: AspectRatio(
-        aspectRatio: gameState.sizeX/gameState.sizeY,
-        child: Card(
-          child: Center(
-            child: GameWidget(widget.localGame),
+        margin: EdgeInsets.all(12),
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: gameState.sizeX / gameState.sizeY,
+            child: Card(
+              child: Center(
+                child: GameWidget(widget.localGame),
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 
   Widget _turnDisplay(Orientation orientation) {
     int playerCount = gameState.playersStillInTheGame.length;
@@ -95,18 +91,22 @@ class LocalGameRouteState extends State<LocalGameRoute>{
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         verticalDirection: orientation == Orientation.portrait
-            ? VerticalDirection.up : VerticalDirection.down, //because ltr when rotated
+            ? VerticalDirection.up
+            : VerticalDirection.down, //because ltr when rotated
         children: List.generate(playerCount, (index) {
           if (gameState.movesMade >= gameState.players.length)
-            index = gameState.players.indexOf(gameState.playersStillInTheGame[index]);
+            index = gameState.players
+                .indexOf(gameState.playersStillInTheGame[index]);
           bool humanPlayer = !gameState.players[index].startsWith("&&AI&&");
-          bool currentPlayer = gameState.players[index] == gameState.currentPlayer;
+          bool currentPlayer =
+              gameState.players[index] == gameState.currentPlayer;
           return AnimatedContainer(
             duration: Duration(milliseconds: 300),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              color: currentPlayer ? Theme.of(context).cardColor : Colors.transparent
-            ),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                color: currentPlayer
+                    ? Theme.of(context).cardColor
+                    : Colors.transparent),
             child: _playerCircle(index, currentPlayer, humanPlayer),
           );
         }),
@@ -114,29 +114,28 @@ class LocalGameRouteState extends State<LocalGameRoute>{
     );
   }
 
-  Widget _playerCircle(int index, bool currentPlayer, bool humanPlayer){
+  Widget _playerCircle(int index, bool currentPlayer, bool humanPlayer) {
     return Container(
         margin: EdgeInsets.all(8),
         child: Stack(
           alignment: Alignment.center,
           children: <Widget>[
-              CircleAvatar(
-                backgroundColor: humanPlayer ? isabelline : Colors.transparent,
-                radius: 16,
-              ),
+            CircleAvatar(
+              backgroundColor: humanPlayer ? isabelline : Colors.transparent,
+              radius: 16,
+            ),
             CircleAvatar(
               backgroundColor: gameState.playerColors[index],
               radius: 12,
             ),
           ],
-        )
-    );
+        ));
   }
-
 }
-class LocalWinDialog extends StatelessWidget{
-  int winnerIndex;
-  GameState gameState;
+
+class LocalWinDialog extends StatelessWidget {
+  final int winnerIndex;
+  final GameState gameState;
   LocalWinDialog(this.winnerIndex, this.gameState);
 
   @override
@@ -152,14 +151,12 @@ class LocalWinDialog extends StatelessWidget{
         radius: 12,
       ),
       actions: <Widget>[
-        RaisedButton(
-          color: spanishOrange,
-          elevation: 0,
-            onPressed: Navigator.of(context).pop,
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(primary: spanishOrange),
+          onPressed: Navigator.of(context).pop,
           child: Text("Back home"),
         )
       ],
     );
   }
-
 }

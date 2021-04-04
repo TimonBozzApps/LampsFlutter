@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -8,11 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lamps3/game.dart';
 import 'package:lamps3/localgameroute.dart';
-import 'package:lamps3/localsetupdialog.dart';
 import 'package:lamps3/onlinegameroute.dart';
-import 'package:lamps3/gamewidget.dart';
 import 'package:lamps3/online.dart';
-import 'package:lamps3/onlinesetupdialogs.dart';
 import 'package:lamps3/theme.dart';
 import 'package:package_info/package_info.dart';
 import 'aigame.dart';
@@ -29,12 +25,13 @@ void main() {
   ));
 }
 
-class Home extends StatefulWidget{
+class Home extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     return HomeState();
   }
 }
+
 class HomeState extends State<Home> {
   OnlineApi _onlineApi = OnlineApi();
   bool _startedGame = false;
@@ -45,18 +42,19 @@ class HomeState extends State<Home> {
     super.initState();
     _initListeners();
   }
-  void _initListeners(){
+
+  void _initListeners() {
     _onlineApi.onlineGame.listen((onlineGame) {
       if (onlineGame != null && !_startedGame) {
         _startedGame = true;
-        if (!_rematch)
-          Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(
-          builder: (context) => OnlineGameRoute(_onlineApi, onlineGame),
-          settings: RouteSettings(
-            name: "onlinegame"
-          )
-        )).then((value) {
+        if (!_rematch) Navigator.pop(context);
+        Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        OnlineGameRoute(_onlineApi, onlineGame),
+                    settings: RouteSettings(name: "onlinegame")))
+            .then((value) {
           print("Rematch Game id: $value");
           if (value == null) {
             print("No rematch");
@@ -87,47 +85,72 @@ class HomeState extends State<Home> {
           children: <Widget>[
             Expanded(
               child: Align(
-                    alignment: Alignment(0, 0.45),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text("Charge!", style: Theme.of(context).textTheme.headline1,),
-                        SizedBox(height: 40,),
-                        RaisedButton(
-                          elevation: 1,
-                          color: Theme.of(context).accentColor,
-                          colorBrightness: Theme.of(context).accentColorBrightness,
-                          child: Text("Play now", style: Theme.of(context).textTheme.button,),
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => LocalGameRoute(
-                                  LocalAiGame(
-                                      generateOnlineGame(6, 4, {"&&AI&&AR": SimpleRuleAgentAdvanced(),
-                                        "&&AI&&SR": SimpleRuleAgent(),
-                                        "&&AI&&RR": RandomAgent(),
-                                        "&&AI&&WR": WeightedRandomAgent(),}),
-                                      {"&&AI&&AR": SimpleRuleAgentAdvanced(),
-                                        "&&AI&&SR": SimpleRuleAgent(),
-                                      "&&AI&&RR": RandomAgent(),
-                                      "&&AI&&WR": WeightedRandomAgent(),}, true)),
-                            ));
-                          },
-                        ),
-                        SizedBox(height: 10,),
-                        FlatButton(
-                          child: Text("How to play", style: Theme.of(context).textTheme.button,),
-                          highlightColor: Colors.transparent,
-                          splashColor: Color(0x40CCCCCC),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => ExplanationDialog(),
-                            );
-                          },
-                        ),
-                      ],
+                alignment: Alignment(0, 0.45),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      "Charge!",
+                      style: Theme.of(context).textTheme.headline1,
                     ),
-                  ),
+                    SizedBox(
+                      height: 40,
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Theme.of(context).accentColor,
+                      ),
+                      child: Text(
+                        "Play now",
+                        style: Theme.of(context).textTheme.button,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LocalGameRoute(LocalAiGame(
+                                  generateAiGame(6, 4, {
+                                    "&&AI&&AR": SimpleRuleAgentAdvanced(),
+                                    "&&AI&&SR": SimpleRuleAgent(),
+                                    "&&AI&&RR": RandomAgent(),
+                                    "&&AI&&WR": WeightedRandomAgent(),
+                                  }),
+                                  {
+                                    "&&AI&&AR": SimpleRuleAgentAdvanced(),
+                                    "&&AI&&SR": SimpleRuleAgent(),
+                                    "&&AI&&RR": RandomAgent(),
+                                    "&&AI&&WR": WeightedRandomAgent(),
+                                  },
+                                  true)),
+                            ));
+                      },
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    TextButton(
+                      child: Text(
+                        "How to play",
+                        style: Theme.of(context).textTheme.button,
+                      ),
+                      style: ButtonStyle(overlayColor:
+                          MaterialStateProperty.resolveWith((states) {
+                        if (states.contains(MaterialState.pressed))
+                          return Color(0x40CCCCCC);
+                        if (states.contains(MaterialState.hovered))
+                          return Colors.transparent;
+                        return null;
+                      })),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => ExplanationDialog(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
             Container(
               height: 200,
@@ -143,13 +166,10 @@ class HomeState extends State<Home> {
               FutureBuilder<PackageInfo>(
                   future: PackageInfo.fromPlatform(),
                   builder: (context, snapshot) {
-                    if (snapshot.data == null)
-                      return Text("Version ???");
+                    if (snapshot.data == null) return Text("Version ???");
                     return Text("Version ${snapshot.data.version}");
-                  }
-              ),
-            if (kIsWeb)
-              Text("Web version 0.13.5 - beautiful")
+                  }),
+            if (kIsWeb) Text("Web version 0.13.5 - beautiful")
           ],
         ),
       );
@@ -160,13 +180,12 @@ class HomeState extends State<Home> {
     );
   }
 
-  GameState generateOnlineGame(int sizeX, int sizeY, Map<String, Agent> aiAgents){
+  GameState generateAiGame(int sizeX, int sizeY, Map<String, Agent> aiAgents) {
     final random = Random();
-    final playerCount = random.nextInt(3)+3;
+    final playerCount = random.nextInt(3) + 3;
     final humanIndex = random.nextInt(playerCount);
     final players = List.generate(playerCount, (index) {
-      if (humanIndex == index)
-        return "$index";
+      if (humanIndex == index) return "$index";
       return "${aiAgents.keys.toList()[random.nextInt(aiAgents.length)]}$index";
     });
     final humanColor = spanishOrange;
@@ -178,17 +197,15 @@ class HomeState extends State<Home> {
       bluePantone,
     }.toList();
     final playerColors = List.generate(playerCount, (index) {
-      if (index == humanIndex)
-        return humanColor;
-      if (index > humanIndex)
-        index--;
+      if (index == humanIndex) return humanColor;
+      if (index > humanIndex) index--;
       return aiColors[index];
     });
     return GameState(sizeX, sizeY, players, playerColors);
   }
 }
 
-class ExplanationDialog extends StatelessWidget{
+class ExplanationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -208,12 +225,20 @@ class ExplanationDialog extends StatelessWidget{
             ),
           ),
           SizedBox(height: 4),
-          Text("Place charges in your or open tiles", textAlign: TextAlign.center,),
-          Text("Create explosions to conquer enemy tiles", textAlign: TextAlign.center,),
-          Text("Be the last one standing", textAlign: TextAlign.center,),
+          Text(
+            "Place charges in your or open tiles",
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Create explosions to conquer enemy tiles",
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Be the last one standing",
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
-
 }

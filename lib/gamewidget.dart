@@ -4,21 +4,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lamps3/game.dart';
 import 'package:lamps3/theme.dart';
-import 'aigame.dart';
 
-class GameWidget extends StatefulWidget{
-  LocalGame _game;
+class GameWidget extends StatefulWidget {
+  final LocalGame _game;
   GameWidget(this._game);
 
   @override
   State<StatefulWidget> createState() {
     return GameWidgetState(_game.gameState.value);
   }
-
 }
-class GameWidgetState extends State<GameWidget> with SingleTickerProviderStateMixin {
+
+class GameWidgetState extends State<GameWidget>
+    with SingleTickerProviderStateMixin {
   GameState gameState2;
-  GameWidgetState(this.gameState2) : _boardPainter = BoardPainter(gameState2, 0);
+  GameWidgetState(this.gameState2)
+      : _boardPainter = BoardPainter(gameState2, 0);
 
   BoardPainter _boardPainter;
   Animation _animation;
@@ -38,7 +39,9 @@ class GameWidgetState extends State<GameWidget> with SingleTickerProviderStateMi
       });
     });
     _controller = AnimationController(
-        duration: Duration(milliseconds: 8*oneFastestRotationDuration.inMilliseconds), vsync: this);
+        duration: Duration(
+            milliseconds: 8 * oneFastestRotationDuration.inMilliseconds),
+        vsync: this);
 
     _controller.forward();
 
@@ -53,7 +56,7 @@ class GameWidgetState extends State<GameWidget> with SingleTickerProviderStateMi
 
   @override
   Widget build(BuildContext context) {
-    _animation = Tween(begin: 0.0, end: 8*2*pi).animate(_controller)
+    _animation = Tween(begin: 0.0, end: 8 * 2 * pi).animate(_controller)
       ..addListener(() {
         setState(() {
           rotationChange = _animation.value;
@@ -61,7 +64,7 @@ class GameWidgetState extends State<GameWidget> with SingleTickerProviderStateMi
         });
       });
     return AspectRatio(
-      aspectRatio: gameState2.sizeX/gameState2.sizeY,
+      aspectRatio: gameState2.sizeX / gameState2.sizeY,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTapUp: _handleTapUp,
@@ -95,7 +98,7 @@ class BoardPainter extends CustomPainter {
   BoardPainter(this._gameState, this.rotationAngle);
 
   var tileSize;
-  var rects = List<List<Rect>>();
+  var rects = <List<Rect>>[];
 
   void paint(Canvas canvas, Size size) {
     tileSize = size.height / _gameState.sizeY;
@@ -106,15 +109,18 @@ class BoardPainter extends CustomPainter {
       ..strokeWidth = 3;
 
     //draw rows
-    for (int row = 1; row < _gameState.sizeY; row++){
-      canvas.drawLine(Offset(0, row*tileSize), Offset(size.width, row*tileSize), gridPainter);
+    for (int row = 1; row < _gameState.sizeY; row++) {
+      canvas.drawLine(Offset(0, row * tileSize),
+          Offset(size.width, row * tileSize), gridPainter);
     }
     //draw columns
-    for (int column = 1; column < _gameState.sizeX; column++){
-      canvas.drawLine(Offset(column*tileSize, 0), Offset(column*tileSize, size.height), gridPainter);
+    for (int column = 1; column < _gameState.sizeX; column++) {
+      canvas.drawLine(Offset(column * tileSize, 0),
+          Offset(column * tileSize, size.height), gridPainter);
     }
 
-    List<Paint> playerPainters = List.generate(_gameState.playerColors.length, (index) {
+    List<Paint> playerPainters =
+        List.generate(_gameState.playerColors.length, (index) {
       return Paint()
         ..style = PaintingStyle.fill
         ..strokeWidth = 5
@@ -127,31 +133,48 @@ class BoardPainter extends CustomPainter {
     int x = 0;
     _gameState.board.forEach((row) {
       int y = 0;
-      List<Rect> rectRow = List<Rect>();
+      List<Rect> rectRow = <Rect>[];
       row.forEach((tile) {
         var rect = Rect.fromPoints(Offset(x * tileSize, y * tileSize),
             Offset((x + 1) * tileSize, (y + 1) * tileSize));
         rectRow.add(rect);
         if (tile.charge > 0) {
-          if (tile.charge > tile.maxCharge) { //explosion
-            final explosionRect = RRect.fromRectAndCorners(rect.deflate(tileSize*0.05),
+          if (tile.charge > tile.maxCharge) {
+            //explosion
+            final explosionRect = RRect.fromRectAndCorners(
+                rect.deflate(tileSize * 0.05),
                 topRight: Radius.circular(8),
                 topLeft: Radius.circular(8),
                 bottomLeft: Radius.circular(8),
                 bottomRight: Radius.circular(8));
-            canvas.drawRRect(explosionRect, playerPainters[_gameState.players.indexOf(tile.owner)]);
-          }else { //circles
-            var chargeDiff = tile.maxCharge-tile.charge;
-            if (tile.charge >= 1)
-              canvas.drawCircle(Offset(_calculateX(0, rect.center.dx, chargeDiff), _calculateY(0, rect.center.dy, chargeDiff)), circleRadius,
+            canvas.drawRRect(explosionRect,
                 playerPainters[_gameState.players.indexOf(tile.owner)]);
+          } else {
+            //circles
+            var chargeDiff = tile.maxCharge - tile.charge;
+            if (tile.charge >= 1)
+              canvas.drawCircle(
+                  Offset(_calculateX(0, rect.center.dx, chargeDiff),
+                      _calculateY(0, rect.center.dy, chargeDiff)),
+                  circleRadius,
+                  playerPainters[_gameState.players.indexOf(tile.owner)]);
             if (tile.charge == 2)
-              canvas.drawCircle(Offset(_calculateX(pi, rect.center.dx, chargeDiff), _calculateY(pi, rect.center.dy, chargeDiff)), circleRadius,
+              canvas.drawCircle(
+                  Offset(_calculateX(pi, rect.center.dx, chargeDiff),
+                      _calculateY(pi, rect.center.dy, chargeDiff)),
+                  circleRadius,
                   playerPainters[_gameState.players.indexOf(tile.owner)]);
-            if (tile.charge == 3){
-              canvas.drawCircle(Offset(_calculateX(2*pi/3, rect.center.dx, chargeDiff), _calculateY(2*pi/3, rect.center.dy, chargeDiff)), circleRadius,
+            if (tile.charge == 3) {
+              canvas.drawCircle(
+                  Offset(_calculateX(2 * pi / 3, rect.center.dx, chargeDiff),
+                      _calculateY(2 * pi / 3, rect.center.dy, chargeDiff)),
+                  circleRadius,
                   playerPainters[_gameState.players.indexOf(tile.owner)]);
-              canvas.drawCircle(Offset(_calculateX(2*pi/3*2, rect.center.dx, chargeDiff), _calculateY(2*pi/3*2, rect.center.dy, chargeDiff)), circleRadius,
+              canvas.drawCircle(
+                  Offset(
+                      _calculateX(2 * pi / 3 * 2, rect.center.dx, chargeDiff),
+                      _calculateY(2 * pi / 3 * 2, rect.center.dy, chargeDiff)),
+                  circleRadius,
                   playerPainters[_gameState.players.indexOf(tile.owner)]);
             }
           }
@@ -168,31 +191,40 @@ class BoardPainter extends CustomPainter {
     //canvas.drawLine(Offset(0, size.height), Offset(size.width, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
     //canvas.drawLine(Offset(size.width, 0), Offset(size.width, size.height), playerPainters[_gameState.players.indexOf(_gameState.currentPlayer)]);
   }
+
   double get alignCircleRadius => tileSize / 4;
   double get circleRadius => tileSize / 5;
-  double _calculateX(double rotationOffset, double originalX, int chargeDiff){
+  double _calculateX(double rotationOffset, double originalX, int chargeDiff) {
     if (chargeDiff == 0)
-      return originalX + cos(rotationAngle+rotationOffset) * alignCircleRadius;
+      return originalX +
+          cos(rotationAngle + rotationOffset) * alignCircleRadius;
     if (chargeDiff == 1)
-      return originalX + cos(rotationAngle/2+rotationOffset) * alignCircleRadius;
+      return originalX +
+          cos(rotationAngle / 2 + rotationOffset) * alignCircleRadius;
     if (chargeDiff == 2)
-      return originalX + cos(rotationAngle/8+rotationOffset) * alignCircleRadius;
+      return originalX +
+          cos(rotationAngle / 8 + rotationOffset) * alignCircleRadius;
     return originalX;
   }
-  double _calculateY(double rotationOffset, double originalY, int chargeDiff){
+
+  double _calculateY(double rotationOffset, double originalY, int chargeDiff) {
     if (chargeDiff == 0)
-      return originalY + sin(rotationAngle+rotationOffset) * alignCircleRadius;
+      return originalY +
+          sin(rotationAngle + rotationOffset) * alignCircleRadius;
     if (chargeDiff == 1)
-      return originalY + sin(rotationAngle/2+rotationOffset) * alignCircleRadius;
+      return originalY +
+          sin(rotationAngle / 2 + rotationOffset) * alignCircleRadius;
     if (chargeDiff == 2)
-      return originalY + sin(rotationAngle/8+rotationOffset) * alignCircleRadius;
+      return originalY +
+          sin(rotationAngle / 8 + rotationOffset) * alignCircleRadius;
     return originalY;
   }
 
-  int tapX(Offset position){
+  int tapX(Offset position) {
     int tapX = -1;
     int tapY = -1;
-    outer: for (int x = 0; x < rects.length; x++) {
+    outer:
+    for (int x = 0; x < rects.length; x++) {
       for (int y = 0; y < rects[x].length; y++) {
         if (rects[x][y].contains(position)) {
           tapX = x;
@@ -201,14 +233,15 @@ class BoardPainter extends CustomPainter {
         }
       }
     }
-    if (tapX == -1 || tapY == -1)
-      return null;
+    if (tapX == -1 || tapY == -1) return null;
     return tapX;
   }
-  int tapY(Offset position){
+
+  int tapY(Offset position) {
     int tapX = -1;
     int tapY = -1;
-    outer: for (int x = 0; x < rects.length; x++) {
+    outer:
+    for (int x = 0; x < rects.length; x++) {
       for (int y = 0; y < rects[x].length; y++) {
         if (rects[x][y].contains(position)) {
           tapX = x;
@@ -217,8 +250,7 @@ class BoardPainter extends CustomPainter {
         }
       }
     }
-    if (tapX == -1 || tapY == -1)
-      return null;
+    if (tapX == -1 || tapY == -1) return null;
     return tapY;
   }
 
@@ -226,5 +258,4 @@ class BoardPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) {
     return true;
   }
-
 }
