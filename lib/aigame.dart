@@ -325,3 +325,6 @@ class SimpleRuleAgentAdvanced implements Agent {
     return null;
   }
 }
+
+
+class Hello
